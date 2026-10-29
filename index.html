@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="MAUSAM MITRA (मौसम मित्र) - Personalized Weather Intelligence & Decision-Support System for SIH">
+    <title>MAUSAM MITRA | Weather Intelligence & Actionable Advisories</title>
+
+    <!-- Google Fonts: Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Leaflet.js CSS (OpenStreetMap Interactive Map) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- =================================================================== -->
+    <!-- HEADER & NAVIGATION                                                 -->
+    <!-- =================================================================== -->
+    <header class="app-header">
+        <div class="header-container">
+            <!-- Brand Logo & Title -->
+            <div class="brand-wrapper">
+                <div class="brand-logo-icon">🌤️</div>
+                <div class="brand-title-group">
+                    <h1>MAUSAM MITRA</h1>
+                    <span class="brand-tagline">Personalized Weather Intelligence & Advisory System</span>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="main-nav" aria-label="Main Navigation">
+                <a href="index.html" class="nav-link active">🏠 Home</a>
+                <a href="dashboard.html" class="nav-link">🌡️ Dashboard</a>
+                <a href="forecast.html" class="nav-link">🌤️ Forecast</a>
+                <a href="assistant.html" class="nav-link">🤖 Assistant</a>
+                <a href="activity.html" class="nav-link">🎯 Activity</a>
+                <a href="alerts.html" class="nav-link">🚨 Alerts <span id="navAlertCountBadge" class="nav-badge count-active" style="display: none;"></span></a>
+                <a href="map.html" class="nav-link">🗺️ Risk Map</a>
+                <a href="preparedness.html" class="nav-link">🛡️ Preparedness</a>
+                <a href="impact.html" class="nav-link">🚗 Impact</a>
+                <a href="community.html" class="nav-link">👥 Community</a>
+                <a href="history.html" class="nav-link">📊 History</a>
+                <a href="profile.html" class="nav-link">👤 Profile</a>
+                <a href="admin.html" class="nav-link">🏛️ Admin</a>
+            </nav>
+
+
+            <!-- Backend Connection Status Indicator -->
+            <div id="backendStatusBadge" class="status-badge" title="Flask Backend Connection Status">
+                <span class="status-dot"></span>
+                <span id="backendStatusText">Checking Backend...</span>
+            </div>
+
+            <!-- Data Freshness & Sync Status Badge (Part 14) -->
+            <div id="dataFreshnessBadge" class="freshness-badge fresh" title="Weather Data Freshness Status">
+                🟢 Fresh
+            </div>
+        </div>
+    </header>
+
+    <!-- =================================================================== -->
+    <!-- MAIN DASHBOARD CONTENT                                              -->
+    <!-- =================================================================== -->
+    <main class="main-container" id="dashboard">
+
+        <!-- System Connection Status Alert Banner -->
+        <div id="systemAlertBanner" class="system-alert-banner">
+            <div class="alert-content">
+                <span class="alert-icon">🔌</span>
+                <div>
+                    <h3 id="alertTitle" class="alert-title">Initializing Backend Connection</h3>
+                    <p id="alertDesc" class="alert-desc">Attempting REST API request to http://127.0.0.1:5000/api/health...</p>
+                </div>
+            </div>
+            <button id="retryConnectionBtn" class="btn-retry">Check Connection</button>
+        </div>
+
+        <!-- Offline Mode Notice Banner (Part 3 & 5) -->
+        <div id="offlineNoticeBanner" class="offline-notice-banner" style="display: none;"></div>
+
+        <!-- LOCATION SEARCH COMPONENT -->
+        <section class="location-search-card">
+            <div class="search-bar-row">
+                <div class="search-input-group">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="citySearchInput" class="search-input" placeholder="Search city (e.g. Indore, Bhopal, Mumbai, Delhi)..." aria-label="City Search">
+                </div>
+                <button id="searchCityBtn" class="btn-primary">Search</button>
+                <button id="useMyLocationBtn" class="btn-secondary">📍 Use My Location</button>
+            </div>
+
+            <div id="searchStatusMsg" class="search-status-msg"></div>
+            <div id="searchResultsDropdown" class="search-results-dropdown"></div>
+        </section>
+
+        <!-- Forecast Summary Intelligent Banner -->
+        <div class="forecast-summary-card">
+            <span class="summary-icon">💡</span>
+            <span id="forecastSummaryText" class="summary-text">Loading forecast summary...</span>
+        </div>
+
+        <!-- PART 20: SIH Differentiator Explanation Banner -->
+        <div class="sih-differentiator-banner">
+            <div class="diff-header">
+                <span class="diff-icon">🤖</span>
+                <strong>From Weather Data to Action</strong>
+            </div>
+            <p>MAUSAM MITRA does not stop at showing raw temperature. It combines 🌦️ Weather + 📅 Forecast + ⚠️ Risk + 🏛️ Official Warnings + 🎯 User Activity to provide 🤖 Actionable Weather Guidance.</p>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- PROMINENT "WHAT SHOULD I DO?" SMART DECISION ENGINE CARD (PART 12)  -->
+        <!-- =================================================================== -->
+        <section class="glass-card decision-section-card" id="whatShouldIDoCard">
+            <div id="decisionLoadingState" class="card-overlay-state" style="display: flex;">
+                <div class="spinner"></div>
+                <div class="overlay-title">Synthesizing Smart Weather Decision...</div>
+            </div>
+            <div id="decisionErrorState" class="card-overlay-state" style="display: none;">
+                <span style="font-size: 1.5rem;">⚠️</span>
+                <div class="overlay-title">Unable to generate weather decision.</div>
+                <div class="overlay-desc"></div>
+            </div>
+
+            <div class="card-header-flex">
+                <div>
+                    <h3 class="activity-card-title">🤖 WHAT SHOULD I DO?</h3>
+                    <p class="activity-card-subtitle">Smart decision orchestration engine (Weather + Forecast + Risk + Official Warnings + Activity)</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <span id="decisionQualityBadge" class="badge-tag">🟢 Live Data</span>
+                    <span id="decisionStatusBadge" class="status-badge-lg success">🟢 SUITABLE</span>
+                </div>
+            </div>
+
+            <!-- Main Decision Message Banner -->
+            <div id="decisionMessageBanner" class="decision-msg-box">
+                <h4 id="decisionActivityTitle">🏃 Fitness Decision</h4>
+                <p id="decisionMessageText">Conditions appear suitable for outdoor exercise.</p>
+            </div>
+
+            <div class="decision-details-grid">
+                <!-- WHY? Explanation Box (Part 9) -->
+                <div class="decision-sub-box">
+                    <h4 class="sub-box-title">🔍 WHY? (Decision Drivers)</h4>
+                    <ul id="decisionReasonsList" class="rec-reasons-list"></ul>
+                </div>
+
+                <!-- ⭐ BETTER TIME Box (Part 8) -->
+                <div class="decision-sub-box">
+                    <h4 class="sub-box-title">⭐ BETTER TIME WINDOW</h4>
+                    <div id="decisionBestTimeText" class="best-time-highlight">⭐ Better time: 7 AM – 9 AM</div>
+                </div>
+
+                <!-- 💡 RECOMMENDED ACTIONS Box (Part 6) -->
+                <div class="decision-sub-box full-width">
+                    <h4 class="sub-box-title">💡 RECOMMENDED ACTIONS</h4>
+                    <ul id="decisionActionsList" class="decision-actions-list"></ul>
+                </div>
+            </div>
+
+            <!-- Footer Meta Row (Part 14 & Part 20) -->
+            <div class="decision-footer-meta">
+                <span id="decisionTimestampText">Decision generated: --:-- PM</span>
+                <span class="decision-sih-tag">MAUSAM MITRA Decision Support Engine • Explainable Guidance</span>
+            </div>
+        </section>
+
+        <!-- YOUR WEATHER PRIORITIES CARD (PART 5) -->
+        <section class="glass-card priority-section-card" id="priorityCard">
+            <h3 class="activity-card-title">⭐ Your Weather Priorities</h3>
+            <div id="userPrioritiesContent"></div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- AI WEATHER INSIGHTS SECTION (EXPERIMENTAL ML FOUNDATION - PHASE 15) -->
+        <!-- =================================================================== -->
+        <section class="glass-card ai-insights-section-card" id="aiInsightsCard">
+            <div id="aiInsightsLoadingState" class="card-overlay-state" style="display: flex;">
+                <div class="spinner"></div>
+                <div class="overlay-title">Fetching MAUSAM MITRA AI Insights...</div>
+            </div>
+            <div class="card-header-flex">
+                <div>
+                    <h3 class="activity-card-title">🤖 AI Weather Insights</h3>
+                    <p class="activity-card-subtitle">Experimental machine-learning weather trend & statistical anomaly detection</p>
+                </div>
+                <span class="ml-badge-tag">Experimental ML insight</span>
+            </div>
+
+            <div class="ai-insights-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 16px;">
+                <!-- ML Prediction Box -->
+                <div class="ai-insight-box glass-card" style="padding: 16px; background: rgba(255, 255, 255, 0.03);">
+                    <h4 class="sub-box-title" style="color: #38bdf8; font-size: 1rem; margin-bottom: 10px;">🌡️ Short-Term Trend Prediction</h4>
+                    <div id="mlPredictionContent">
+                        <div class="ml-pred-temp-row" style="display: flex; align-items: baseline; gap: 12px; margin-bottom: 10px;">
+                            <span id="mlPredTemp" style="font-size: 2.2rem; font-weight: 700; color: #f43f5e;">--°C</span>
+                            <span id="mlPredTrend" class="status-badge-lg" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">➡️ Stable</span>
+                        </div>
+                        <div id="mlPredDetails" class="ml-pred-details" style="font-size: 0.85rem; color: #94a3b8; display: flex; flex-direction: column; gap: 4px;">
+                            <div>📊 Data: Historical weather observations</div>
+                            <div>🧠 Model: Temperature Prediction v1.0</div>
+                            <div>📈 Confidence: Standard statistical interval</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Anomaly Detection Box -->
+                <div class="ai-insight-box glass-card" style="padding: 16px; background: rgba(255, 255, 255, 0.03);">
+                    <h4 class="sub-box-title" style="color: #fbbf24; font-size: 1rem; margin-bottom: 10px;">⚠️ Statistical Anomaly Check</h4>
+                    <div id="mlAnomalyContent">
+                        <p class="ml-anomaly-status" style="font-size: 0.9rem; color: #94a3b8;">Scanning recent observations against baseline...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ai-insights-disclaimer" style="margin-top: 16px; font-size: 0.82rem; color: #64748b; padding: 10px 14px; background: rgba(15, 23, 42, 0.4); border-radius: 8px; border-left: 3px solid #38bdf8;">
+                ℹ️ <strong>MAUSAM MITRA AI Insight:</strong> Experimental ML outputs supplement deterministic risk models and do not replace official meteorological authority warnings.
+            </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- EARLY WARNING & PREPAREDNESS SYSTEM CARD (PARTS 1 - 28)            -->
+        <!-- =================================================================== -->
+        <section class="glass-card early-warning-section-card" id="earlyWarningCard">
+            <div id="ewLoadingState" class="card-overlay-state" style="display: flex;">
+                <div class="spinner"></div>
+                <div class="overlay-title">Checking Early Warning & Preparedness System...</div>
+            </div>
+
+            <div class="card-header-flex">
+                <div>
+                    <h3 class="activity-card-title">🚨 WEATHER WARNING & PREPAREDNESS</h3>
+                    <p class="activity-card-subtitle">Early warning detection, risk assessment & Before/During/After preparedness workflow</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <span id="ewQualityBadge" class="badge-tag">🟢 Live Advisory</span>
+                    <span id="ewSourceBadge" class="badge-tag" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">🚨 MAUSAM MITRA Alert</span>
+                    <span id="ewLevelBadge" class="status-badge-lg warning">🟠 WARNING</span>
+                </div>
+            </div>
+
+            <!-- Main Warning Text Box -->
+            <div class="decision-msg-box" style="margin-top: 14px;">
+                <h4 id="ewTitle">🌧️ Heavy Rain Risk Warning</h4>
+                <p id="ewMessage">Rainfall probability is high over the current and near forecast period.</p>
+            </div>
+
+            <div class="decision-details-grid" style="margin-top: 16px;">
+                <!-- WHY Box -->
+                <div class="decision-sub-box">
+                    <h4 class="sub-box-title">🔍 WHY? (Warning Evidence)</h4>
+                    <ul id="ewReasonsList" class="rec-reasons-list"></ul>
+                </div>
+
+                <!-- WHAT SHOULD I DO Box -->
+                <div class="decision-sub-box">
+                    <h4 class="sub-box-title">💡 WHAT SHOULD I DO?</h4>
+                    <ul id="ewActionsList" class="decision-actions-list"></ul>
+                </div>
+            </div>
+
+            <!-- Action Link to Full Preparedness Page (Part 14) -->
+            <div style="margin-top: 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 12px 16px; background: rgba(56, 189, 248, 0.08); border-radius: 10px;">
+                <div style="font-size: 0.9rem; color: #e2e8f0;">
+                    🛡️ View complete <strong>Before / During / After Safety Guidelines</strong> for your activity
+                </div>
+                <a href="preparedness.html" class="btn-map-control" style="background: #38bdf8; color: #0f172a; font-weight: 700; text-decoration: none; padding: 8px 16px;">
+                    🛡️ Open Preparedness Plan &rarr;
+                </a>
+            </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- POTENTIAL IMPACT ASSESSMENT CARD (PARTS 16 - 30)                    -->
+        <!-- =================================================================== -->
+        <section class="glass-card impact-section-card" id="impactSection">
+            <div id="impactDashboardLoadingState" class="card-overlay-state" style="display: flex;">
+                <div class="spinner"></div>
+                <div class="overlay-title">Evaluating Activity & Domain Impact Assessments...</div>
+            </div>
+
+            <div class="card-header-flex">
+                <div>
+                    <h3 class="activity-card-title">🎯 POTENTIAL IMPACT ASSESSMENT</h3>
+                    <p class="activity-card-subtitle">Domain-specific weather sensitivity matrix ("What could this weather affect?")</p>
+                </div>
+                <a href="impact.html" class="btn-map-control" style="background: rgba(167, 139, 250, 0.15); border-color: rgba(167, 139, 250, 0.3); color: #a78bfa; text-decoration: none;">
+                    🎯 View Full Impact Matrix &rarr;
+                </a>
+            </div>
+
+            <!-- 4 Compact Impact Cards Grid (Part 16) -->
+            <div id="impactCardsContainer" class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-top: 16px;"></div>
+
+            <div class="ai-insights-disclaimer" style="margin-top: 14px; font-size: 0.82rem; color: #64748b; padding: 8px 12px; background: rgba(15, 23, 42, 0.4); border-radius: 8px; border-left: 3px solid #a78bfa;">
+                ℹ️ <strong>MAUSAM MITRA Impact Disclaimer:</strong> Impact levels are weather-based potential assessments. They do not confirm actual infrastructure, road, crop, or disaster conditions.
+            </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- SMART WEATHER ALERTS & OFFICIAL WARNINGS SECTION (PARTS 8 - 20)     -->
+        <!-- =================================================================== -->
+        <section class="glass-card alerts-section-card" id="alerts">
+            <div id="alertsLoadingState" class="card-overlay-state" style="display: flex;">
+                <div class="spinner"></div>
+                <div class="overlay-title">Checking Weather Alerts & Official Warnings...</div>
+            </div>
+            <div id="alertsErrorState" class="card-overlay-state" style="display: none;">
+                <span style="font-size: 1.5rem;">⚠️</span>
+                <div class="overlay-title">Unable to check weather alerts.</div>
+                <div class="overlay-desc"></div>
+            </div>
+
+            <div class="alerts-header-row">
+                <div>
+                    <h3 class="activity-card-title">🚨 Weather Alerts & Government Warnings</h3>
+                    <p id="alertSummaryHeader" class="activity-card-subtitle">Checking live alert & official warning feeds...</p>
+                </div>
+
+                <!-- Part 10: Browser Notification User Control -->
+                <div class="notif-control-group">
+                    <button id="enableNotificationsBtn" class="btn-notif">Enable Weather Notifications</button>
+                    <span id="notificationStatusText" class="notif-status-text">Click to enable desktop alerts</span>
+                </div>
+            </div>
+
+            <!-- PART 8: 🏛️ Official Weather Warnings Section -->
+            <div class="alert-section-block">
+                <h4 class="alert-subsection-title">🏛️ Official Weather Warnings</h4>
+                <div id="officialAlertsContainer" class="alerts-list-container"></div>
+            </div>
+
+            <!-- PART 9: 🤖 MAUSAM MITRA Assessment Section -->
+            <div class="alert-section-block" style="margin-top: 24px;">
+                <div class="mm-assessment-header">
+                    <h4 class="alert-subsection-title">🤖 MAUSAM MITRA Assessment</h4>
+                    <span class="mm-disclaimer-badge">MAUSAM MITRA assessments are decision-support insights and should not be treated as official warnings.</span>
+                </div>
+                <div id="mausamMitraAlertsContainer" class="alerts-list-container"></div>
+            </div>
+
+            <!-- PART 20: SIH Demonstration Transparency Banner -->
+            <div class="sih-transparency-banner" style="margin-top: 24px;">
+                <span class="banner-icon">ℹ️</span>
+                <div class="banner-text">
+                    <strong>Why this matters:</strong> MAUSAM MITRA combines official weather warnings with its own explainable weather-risk analysis and personalized activity guidance.
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- HYPERLOCAL WEATHER INTELLIGENCE SECTION (PARTS 1 - 30)              -->
+        <!-- =================================================================== -->
+        <section id="hyperlocalSection" class="my-6">
+            <div id="hyperlocalDashboardContainer"></div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- WEATHER RISK MAP SECTION (PARTS 1 - 14 & HYPERLOCAL)               -->
+        <!-- =================================================================== -->
+        <section class="glass-card map-section-card" id="mapSection">
+            <div class="map-header-flex flex-col md:flex-row gap-2 justify-between items-start md:items-center mb-3">
+                <div>
+                    <h3 class="activity-card-title flex items-center gap-2">
+                        🗺️ WEATHER RISK MAP <span id="mapViewModeLabel" class="text-xs font-normal text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">📍 Hyperlocal View</span>
+                    </h3>
+                    <p class="activity-card-subtitle">Real-time geographic weather conditions & risk index overlay across monitored locations</p>
+                </div>
+                <div class="map-actions-group flex flex-wrap gap-2 items-center">
+                    <div class="flex items-center gap-1 bg-slate-900/60 p-1 rounded-lg border border-slate-700/60 text-xs">
+                        <span class="text-slate-400 text-[11px] px-1 font-medium">Layers:</span>
+                        <button id="layerBtn_risk" onclick="setMapLayerMode('risk')" class="px-2 py-1 rounded bg-emerald-600 text-white font-semibold border border-emerald-500">Risk</button>
+                        <button id="layerBtn_temperature" onclick="setMapLayerMode('temperature')" class="px-2 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700">Temp</button>
+                        <button id="layerBtn_rain" onclick="setMapLayerMode('rain')" class="px-2 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700">Rain %</button>
+                        <button id="layerBtn_impact" onclick="setMapLayerMode('impact')" class="px-2 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700">Impact</button>
+                    </div>
+                    <button onclick="toggleHyperlocalMapView()" class="btn-map-control" title="Toggle Hyperlocal View">
+                        📍 Toggle View
+                    </button>
+                    <button id="toggleCommunityLayerBtn" class="btn-map-control" onclick="toggleCommunityMapLayer()" title="Toggle Community Weather Observations Layer">
+                        👥 Community Layer
+                    </button>
+                    <button id="centerMapBtn" class="btn-map-control" title="Center on Selected Location">
+                        📍 Center
+                    </button>
+                    <button id="refreshMapBtn" class="btn-map-control" title="Refresh Weather Risk Map Data">
+                        🔄 Refresh
+                    </button>
+                </div>
+            </div>
+
+
+            <!-- Leaflet Interactive Map Container -->
+            <div class="map-wrapper" style="position: relative;">
+                <div id="mapLoadingState" class="card-overlay-state" style="display: flex;">
+                    <div class="spinner"></div>
+                    <div class="overlay-title">Loading Interactive Weather Risk Map...</div>
+                </div>
+                <div id="mapErrorState" class="card-overlay-state" style="display: none;">
+                    <span style="font-size: 1.5rem;">⚠️</span>
+                    <div class="overlay-title">Unable to load weather risk data.</div>
+                    <div class="overlay-desc">Please verify backend connection.</div>
+                </div>
+
+                <div id="weatherRiskMap" class="weather-risk-map-container"></div>
+            </div>
+
+            <!-- Fixed Map Legend (Part 10) -->
+            <div class="map-legend-bar">
+                <span class="legend-title">Weather Risk:</span>
+                <div class="legend-items">
+                    <span class="legend-item"><span class="legend-color level-low"></span> 🟢 LOW</span>
+                    <span class="legend-item"><span class="legend-color level-moderate"></span> 🟡 MODERATE</span>
+                    <span class="legend-item"><span class="legend-color level-high"></span> 🟠 HIGH</span>
+                    <span class="legend-item"><span class="legend-color level-severe"></span> 🔴 SEVERE</span>
+                    <span class="legend-item legend-selected-tag">📍 Selected Location</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Location Details Modal (Part 9) -->
+        <div id="locationDetailsModal" class="modal-overlay" style="display: none;">
+            <div class="modal-card glass-card">
+                <div class="modal-header">
+                    <h3>📍 Location Risk Breakdown</h3>
+                    <button id="closeModalBtn" class="btn-close-modal">&times;</button>
+                </div>
+                <div id="modalDetailsBody" class="modal-body"></div>
+            </div>
+        </div>
+
+        <!-- Dashboard Grid Layout -->
+        <div class="dashboard-grid">
+
+            <!-- GROUND REALITY DASHBOARD CARD (Part 21) -->
+            <div id="groundRealityCardContainer" class="ground-reality-card-wrapper mb-3" style="grid-column: 1 / -1;"></div>
+
+            <!-- LIVE CURRENT WEATHER CARD -->
+            <section class="glass-card hero-weather-card" id="heroWeatherCard">
+
+                <div id="weatherLoadingState" class="card-overlay-state" style="display: flex;">
+                    <div class="spinner"></div>
+                    <div class="overlay-title">Loading weather data...</div>
+                </div>
+
+                <div id="weatherErrorState" class="card-overlay-state" style="display: none;">
+                    <span style="font-size: 2rem;">⚠️</span>
+                    <div class="overlay-title">Unable to fetch weather data. Please try again.</div>
+                    <div id="weatherErrorText" class="overlay-desc">Check your backend server or API key configuration.</div>
+                    <button id="retryWeatherBtn" class="btn-retry" style="margin-top: 10px;">Retry Fetching Weather</button>
+                </div>
+
+                <div id="demoDataNotice" class="demo-notice-banner"></div>
+
+                <div class="card-header-flex">
+                    <div class="location-info">
+                        <h2 id="currentLocationTitle">📍 Indore, Madhya Pradesh</h2>
+                        <p>Real-Time Weather Metrics</p>
+                    </div>
+                    <span class="badge-tag">Live REST API</span>
+                </div>
+
+                <div class="weather-hero-main">
+                    <span class="hero-condition-icon" id="weatherIcon">🌤️</span>
+                    <div class="hero-temp-large" id="weatherTemp">--°C</div>
+                    <div class="hero-condition-desc">
+                        <h3 id="weatherCondition">Loading...</h3>
+                        <p id="weatherFeelsLike">Feels like --°C</p>
+                    </div>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-pill">
+                        <span class="metric-label">Humidity</span>
+                        <span class="metric-value" id="metricHumidity">--%</span>
+                    </div>
+                    <div class="metric-pill">
+                        <span class="metric-label">Wind Speed</span>
+                        <span class="metric-value" id="metricWind">-- km/h</span>
+                    </div>
+                    <div class="metric-pill">
+                        <span class="metric-label">Visibility</span>
+                        <span class="metric-value" id="metricVisibility">-- km</span>
+                    </div>
+                    <div class="metric-pill">
+                        <span class="metric-label">Rain Prob / Cloud</span>
+                        <span class="metric-value" id="metricRainProb">--%</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5 ACTIVITY SELECTOR CARD -->
+            <section class="glass-card">
+                <h3 class="activity-card-title">🎯 What are you planning?</h3>
+                <p class="activity-card-subtitle">Select an activity to generate personalized decision-support advisories.</p>
+
+                <div class="activity-options-grid">
+                    <button class="activity-btn active" data-activity="farming">
+                        <span class="activity-icon">🌾</span>
+                        <span class="activity-name">Farming</span>
+                    </button>
+                    <button class="activity-btn" data-activity="fitness">
+                        <span class="activity-icon">🏃</span>
+                        <span class="activity-name">Fitness</span>
+                    </button>
+                    <button class="activity-btn" data-activity="travel">
+                        <span class="activity-icon">🚗</span>
+                        <span class="activity-name">Travel</span>
+                    </button>
+                    <button class="activity-btn" data-activity="daily">
+                        <span class="activity-icon">🏠</span>
+                        <span class="activity-name">Daily Activity</span>
+                    </button>
+                    <button class="activity-btn" data-activity="outdoor">
+                        <span class="activity-icon">🌳</span>
+                        <span class="activity-name">Outdoor Activity</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- HOURLY FORECAST HORIZONTAL SCROLL SECTION -->
+            <section class="glass-card hourly-forecast-card" id="forecast">
+                <div id="hourlyLoadingState" class="card-overlay-state" style="display: flex;">
+                    <div class="spinner"></div>
+                    <div class="overlay-title">Loading hourly forecast...</div>
+                </div>
+                <div id="hourlyErrorState" class="card-overlay-state" style="display: none;">
+                    <span style="font-size: 1.5rem;">⚠️</span>
+                    <div class="overlay-title">Unable to load forecast.</div>
+                </div>
+
+                <div class="card-header-flex">
+                    <div>
+                        <h3 class="activity-card-title">⏱️ Hourly Weather Forecast</h3>
+                        <p class="activity-card-subtitle">Upcoming 24-hour temperature and precipitation timeline</p>
+                    </div>
+                </div>
+
+                <div id="hourlyForecastCards" class="hourly-scroll-wrapper"></div>
+            </section>
+
+            <!-- 7-DAY FORECAST & TEMPERATURE TREND GRID -->
+            <section class="forecast-split-grid">
+                <div class="glass-card" style="position: relative;">
+                    <div id="dailyLoadingState" class="card-overlay-state" style="display: flex;">
+                        <div class="spinner"></div>
+                        <div class="overlay-title">Loading 7-day forecast...</div>
+                    </div>
+                    <div id="dailyErrorState" class="card-overlay-state" style="display: none;">
+                        <span style="font-size: 1.5rem;">⚠️</span>
+                        <div class="overlay-title">Unable to load 7-day forecast.</div>
+                    </div>
+
+                    <h3 class="activity-card-title">📅 7-Day Weather Outlook</h3>
+                    <p class="activity-card-subtitle">Multi-day high/low temperature & rain probability</p>
+
+                    <div id="dailyForecastList" class="daily-forecast-list"></div>
+                </div>
+
+                <div class="glass-card temp-trend-card">
+                    <h3 class="activity-card-title">📈 Temperature Trend</h3>
+                    <p class="activity-card-subtitle">Visual temperature trajectory over the upcoming week</p>
+
+                    <div class="canvas-wrapper">
+                        <canvas id="tempTrendCanvas"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- =================================================================== -->
+            <!-- WEATHER TRENDS & HISTORICAL ANALYTICS SECTION (PARTS 7 - 13)        -->
+            <!-- =================================================================== -->
+            <section class="glass-card trends-section-card" id="historyTrends">
+                <div id="trendLoadingState" class="card-overlay-state" style="display: flex;">
+                    <div class="spinner"></div>
+                    <div class="overlay-title">Analyzing Historical Weather Trends...</div>
+                </div>
+                <div id="trendErrorState" class="card-overlay-state" style="display: none;">
+                    <span style="font-size: 1.5rem;">⚠️</span>
+                    <div class="overlay-title">Not enough historical data available yet.</div>
+                    <div class="overlay-desc">Snapshot collection active.</div>
+                </div>
+
+                <div class="card-header-flex">
+                    <div>
+                        <h3 class="activity-card-title">📊 Weather Trends & Historical Observations</h3>
+                        <p class="activity-card-subtitle">Historical averages, risk trajectory over time, and pattern analysis</p>
+                    </div>
+                    <span id="trendDataQualityBadge" class="badge-tag">🟢 Data: GOOD</span>
+                </div>
+
+                <div class="metrics-grid" style="margin-top: 14px;">
+                    <div class="metric-pill">
+                        <span class="metric-label">🌡️ Avg Temp</span>
+                        <span class="metric-value" id="trendAvgTemp">--°C</span>
+                    </div>
+                    <div class="metric-pill">
+                        <span class="metric-label">💧 Avg Humidity</span>
+                        <span class="metric-value" id="trendAvgHumidity">--%</span>
+                    </div>
+                    <div class="metric-pill">
+                        <span class="metric-label">💨 Avg Wind</span>
+                        <span class="metric-value" id="trendAvgWind">-- km/h</span>
+                    </div>
+                    <div class="metric-pill">
+                        <span class="metric-label">⚠️ Avg Risk Score</span>
+                        <span class="metric-value" id="trendAvgRisk">-- / 100</span>
+                    </div>
+                    <div class="metric-pill">
+                        <span class="metric-label">📈 Risk Trend</span>
+                        <span class="metric-value" id="trendRiskStatus">➡️ Stable</span>
+                    </div>
+                </div>
+
+                <div style="margin-top: 16px;">
+                    <h4 style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 6px;">🔍 Weather Pattern Summary:</h4>
+                    <div id="trendPatternSummary" class="rec-message-banner" style="font-size: 0.92rem;">
+                        Analyzing stored historical observations...
+                    </div>
+                </div>
+
+                <div style="margin-top: 16px;">
+                    <h4 style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 6px;">📈 Temperature Observation Timeline:</h4>
+                    <div class="canvas-wrapper" style="height: 150px;">
+                        <canvas id="historyTrendCanvas"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- LIVE WEATHER RISK ENGINE CARD -->
+            <section class="glass-card risk-index-card" id="risk">
+                <div id="riskLoadingState" class="card-overlay-state" style="display: flex;">
+                    <div class="spinner"></div>
+                    <div class="overlay-title">Calculating Weather Risk...</div>
+                </div>
+                <div id="riskErrorState" class="card-overlay-state" style="display: none;">
+                    <span style="font-size: 1.5rem;">⚠️</span>
+                    <div class="overlay-title">Unable to calculate risk.</div>
+                </div>
+
+                <span class="risk-title">⚡ WEATHER RISK ASSESSMENT</span>
+                <div id="riskGaugeBadge" class="risk-gauge level-low">LOW</div>
+                <h3 id="riskLevelText" class="risk-level-heading level-low">🟢 LOW RISK</h3>
+                <span id="riskScoreValue" class="risk-score-badge">Score: 0 / 100</span>
+                <p id="riskSummaryText" class="activity-card-subtitle">Analyzing weather risk factors...</p>
+
+                <div id="riskCategoriesGrid" class="risk-categories-grid" style="width: 100%;"></div>
+
+                <div class="risk-reasons-container" style="width: 100%; text-align: left;">
+                    <div class="risk-reasons-title">🔍 Why? (Risk Drivers)</div>
+                    <ul id="riskReasonsList" class="risk-reasons-list"></ul>
+                </div>
+
+                <div id="riskDisclaimerText" class="risk-disclaimer">
+                    MAUSAM MITRA Risk Assessment is a decision-support calculation and does not replace official emergency alerts.
+                </div>
+            </section>
+
+            <!-- LIVE PERSONALIZED RECOMMENDATION CARD -->
+            <section class="glass-card recommendation-advice-card" id="advisories" style="grid-column: 1 / -1; position: relative;">
+                <div id="recLoadingState" class="card-overlay-state" style="display: flex;">
+                    <div class="spinner"></div>
+                    <div class="overlay-title">Analyzing Weather for Selected Activity...</div>
+                </div>
+                <div id="recErrorState" class="card-overlay-state" style="display: none;">
+                    <span style="font-size: 1.5rem;">⚠️</span>
+                    <div class="overlay-title">Unable to generate recommendation.</div>
+                </div>
+
+                <div class="card-header-flex">
+                    <div>
+                        <h3 id="recActivityTitle" class="activity-card-title">🎯 YOUR WEATHER ADVICE</h3>
+                        <p class="activity-card-subtitle">Personalized Actionable Guidance & Risk Mitigation</p>
+                    </div>
+                    <span id="recLevelBadge" class="badge-tag level-low">🟢 ADVICE: LOW</span>
+                </div>
+
+                <div class="rec-message-banner">
+                    <p id="recMessageText">Analyzing weather conditions for your planned activity...</p>
+                </div>
+
+                <div style="margin-top: 8px;">
+                    <div class="rec-reasons-title">🔍 WHY THIS RECOMMENDATION?</div>
+                    <ul id="recReasonsList" class="rec-reasons-list"></ul>
+                </div>
+
+                <div id="recBestTimeBox" class="rec-best-time-box">
+                    <span id="recBestTimeText">⭐ Better time: 7 AM – 10 AM</span>
+                </div>
+
+                <div class="today-plan-section">
+                    <h4 class="activity-card-title" style="font-size: 0.95rem;">📅 Today's Activity Suitability Plan</h4>
+                    <p class="activity-card-subtitle">Hourly window suitability breakdown for planned activity</p>
+
+                    <div id="todayPlanGrid" class="today-plan-grid"></div>
+                </div>
+
+                <div id="recDisclaimerText" class="risk-disclaimer">
+                    General weather-based decision support guidance.
+                </div>
+            </section>
+
+            <!-- =================================================================== -->
+            <!-- USER PROFILE & PREFERENCES SECTION (PARTS 1 - 10)                   -->
+            <!-- =================================================================== -->
+            <section class="glass-card profile-section-card" id="profileSection" style="grid-column: 1 / -1;">
+                <div class="card-header-flex">
+                    <div>
+                        <h3 class="activity-card-title">👤 MY WEATHER PROFILE & PREFERENCES</h3>
+                        <p class="activity-card-subtitle">Personalize your activity priorities, default activity, locations, and unit settings</p>
+                    </div>
+                    <span class="badge-tag">Preferences Mode</span>
+                </div>
+
+                <div id="profileSaveStatus" class="profile-status-msg" style="display: none;"></div>
+
+                <div class="profile-form-grid">
+                    <!-- Name Input -->
+                    <div class="form-group">
+                        <label class="form-label" for="prefUserName">Your Name (Optional)</label>
+                        <input type="text" id="prefUserName" class="form-input" placeholder="e.g. Alex" aria-label="User Name">
+                    </div>
+
+                    <!-- Default Activity Selector -->
+                    <div class="form-group">
+                        <label class="form-label" for="prefDefaultActivity">Default Activity on Startup</label>
+                        <select id="prefDefaultActivity" class="form-select" aria-label="Default Activity">
+                            <option value="farming">🌾 Farming</option>
+                            <option value="fitness">🏃 Fitness</option>
+                            <option value="travel">🚗 Travel</option>
+                            <option value="daily">🏠 Daily Activity</option>
+                            <option value="outdoor">🌳 Outdoor Activity</option>
+                        </select>
+                    </div>
+
+                    <!-- Preferred Activities Checkboxes -->
+                    <div class="form-group full-width">
+                        <label class="form-label">Preferred Activities (User Priorities)</label>
+                        <div class="checkbox-group-grid">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="prefAct_travel" value="travel"> 🚗 Travel
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="prefAct_fitness" value="fitness"> 🏃 Fitness
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="prefAct_farming" value="farming"> 🌾 Farming
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="prefAct_daily" value="daily"> 🏠 Daily Activity
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="prefAct_outdoor" value="outdoor"> 🌳 Outdoor Activity
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Preferred Location -->
+                    <div class="form-group full-width">
+                        <label class="form-label">Saved Preferred Location</label>
+                        <div class="pref-location-row">
+                            <span id="prefLocationText" class="pref-loc-tag">None set</span>
+                            <button id="setPreferredLocBtn" class="btn-secondary-sm">📍 Save Current Location as Preferred</button>
+                        </div>
+                    </div>
+
+                    <!-- Display Units: Temperature & Wind -->
+                    <div class="form-group">
+                        <label class="form-label">Temperature Unit</label>
+                        <div class="radio-group-row">
+                            <label class="radio-label">
+                                <input type="radio" name="tempUnit" value="celsius"> Celsius (°C)
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="tempUnit" value="fahrenheit"> Fahrenheit (°F)
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Wind Speed Unit</label>
+                        <div class="radio-group-row">
+                            <label class="radio-label">
+                                <input type="radio" name="windUnit" value="kmh"> km/h
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="windUnit" value="mph"> mph
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Notification Delivery Preferences -->
+                    <div class="form-group full-width">
+                        <label class="form-label">Desktop Push Notification Preferences</label>
+                        <div class="checkbox-group-grid">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="prefWeatherAlerts" checked> 🌧️ Weather Alerts (General Severe Weather)
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="prefActivityAlerts" checked> 🎯 Activity Alerts (Activity-Specific Advisories)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="profile-actions-row">
+                    <button id="saveProfileBtn" class="btn-primary">💾 Save Preferences</button>
+                    <button id="resetProfileBtn" class="btn-danger-outline">🔄 Reset Preferences</button>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- =================================================================== -->
+    <!-- COMMUNITY WEATHER REPORT MODALS (Part 3 & Part 31)                 -->
+    <!-- =================================================================== -->
+    
+    <!-- Report Weather Modal (Part 3) -->
+    <div id="reportWeatherModal" class="modal-overlay" style="display: none;">
+        <div class="modal-card glass-card modal-lg">
+            <div class="modal-header d-flex justify-content-between align-items-center">
+                <h3>📍 Report Local Weather</h3>
+                <button class="btn-close-modal" onclick="closeReportModal()">&times;</button>
+            </div>
+            <div class="modal-body p-3">
+                <form id="communityReportForm" onsubmit="submitCommunityReportForm(event)">
+                    <div class="form-group mb-3">
+                        <label class="font-weight-bold mb-2 text-primary-light">What are you observing?</label>
+                        <div class="event-type-grid">
+                            <button type="button" class="btn btn-outline-light event-type-btn active" data-type="heavy_rain" onclick="selectCommunityEventType('heavy_rain')">🌧️ Heavy Rain</button>
+                            <button type="button" class="btn btn-outline-light event-type-btn" data-type="waterlogging" onclick="selectCommunityEventType('waterlogging')">🌊 Waterlogging</button>
+                            <button type="button" class="btn btn-outline-light event-type-btn" data-type="strong_wind" onclick="selectCommunityEventType('strong_wind')">💨 Strong Wind</button>
+                            <button type="button" class="btn btn-outline-light event-type-btn" data-type="thunderstorm" onclick="selectCommunityEventType('thunderstorm')">⛈️ Thunderstorm</button>
+                            <button type="button" class="btn btn-outline-light event-type-btn" data-type="low_visibility" onclick="selectCommunityEventType('low_visibility')">🌫️ Low Visibility</button>
+                            <button type="button" class="btn btn-outline-light event-type-btn" data-type="extreme_heat" onclick="selectCommunityEventType('extreme_heat')">🌡️ Extreme Heat</button>
+                            <button type="button" class="btn btn-outline-light event-type-btn" data-type="extreme_cold" onclick="selectCommunityEventType('extreme_cold')">❄️ Extreme Cold</button>
+                            <button type="button" class="btn btn-outline-light event-type-btn" data-type="travel_difficulty" onclick="selectCommunityEventType('travel_difficulty')">🛣️ Travel Difficulty</button>
+                            <button type="button" class="btn btn-outline-light event-type-btn" data-type="other" onclick="selectCommunityEventType('other')">⚠️ Other</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="font-weight-bold mb-2 text-primary-light">Observed Severity Level:</label>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn severity-pill pill-low" data-severity="low" onclick="selectCommunitySeverity('low')">🟢 Low</button>
+                            <button type="button" class="btn severity-pill pill-moderate active" data-severity="moderate" onclick="selectCommunitySeverity('moderate')">🟡 Moderate</button>
+                            <button type="button" class="btn severity-pill pill-high" data-severity="high" onclick="selectCommunitySeverity('high')">🟠 High</button>
+                            <button type="button" class="btn severity-pill pill-severe" data-severity="severe" onclick="selectCommunitySeverity('severe')">🔴 Severe</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="font-weight-bold mb-1 text-primary-light">Optional Description:</label>
+                        <textarea id="reportDescriptionInput" class="form-control bg-dark text-light border-secondary" rows="3" placeholder="Describe what you are observing (e.g. water accumulation near main junction)..." maxlength="500"></textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="font-weight-bold small text-muted">Latitude:</label>
+                            <input type="number" step="any" id="reportLatInput" class="form-control bg-dark text-light border-secondary" value="22.7196" required>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="font-weight-bold small text-muted">Longitude:</label>
+                            <input type="number" step="any" id="reportLonInput" class="form-control bg-dark text-light border-secondary" value="75.8577" required>
+                        </div>
+                    </div>
+                    <input type="hidden" id="reportLocationAreaInput" value="Indore Region">
+
+                    <div class="text-muted small mb-3">
+                        🔒 <em>Location Privacy Protected: Exact coordinates are stored backend-only. Public maps display anonymized area grids.</em>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-secondary" onclick="closeReportModal()">Cancel</button>
+                        <button type="submit" id="submitReportBtn" class="btn btn-primary">Submit Observation</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- My Reports Drawer Modal (Part 31) -->
+    <div id="myReportsModal" class="modal-overlay" style="display: none;">
+        <div class="modal-card glass-card">
+            <div class="modal-header d-flex justify-content-between align-items-center">
+                <h3>👥 My Weather Reports & Sync Status</h3>
+                <button class="btn-close-modal" onclick="closeMyReportsDrawer()">&times;</button>
+            </div>
+            <div id="myReportsListContainer" class="modal-body p-0">
+                <p class="text-muted p-3">Loading observations...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Element -->
+    <div id="communityToast" class="community-toast" style="display:none;"></div>
+
+    <!-- =================================================================== -->
+    <!-- FOOTER                                                              -->
+    <!-- =================================================================== -->
+    <footer class="app-footer">
+        <div class="footer-container">
+            <div>
+                <strong>MAUSAM MITRA (मौसम मित्र)</strong> — SIH Level Decision Support System
+            </div>
+            <div class="footer-tech-stack">
+                Tech Stack:
+                <span>HTML5</span>
+                <span>CSS3</span>
+                <span>Vanilla JS</span>
+                <span>Python</span>
+                <span>Flask</span>
+                <span>Smart Alerts Engine</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript Modules (Loaded in strict dependency order) -->
+    <!-- Leaflet.js Library for OpenStreetMap -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="js/api.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/preferences.js"></script>
+    <script src="js/weather.js"></script>
+    <script src="js/forecast.js"></script>
+    <script src="js/risk.js"></script>
+    <script src="js/recommendations.js"></script>
+    <script src="js/alerts.js"></script>
+    <script src="js/decision.js"></script>
+    <script src="js/history.js"></script>
+    <script src="js/location.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/ml.js"></script>
+    <script src="js/early_warning.js"></script>
+    <script src="js/impact.js"></script>
+    <script src="js/hyperlocal.js"></script>
+    <script src="js/community.js"></script>
+    <!-- FLOATING ASSISTANT WIDGET LAUNCHER & DRAWER -->
+    <button id="floating-assistant-btn" class="floating-assistant-trigger">
+        <span>🤖</span> Ask MAUSAM MITRA
+    </button>
+
+    <div id="assistant-drawer-modal" class="assistant-drawer-modal">
+        <div class="chat-header">
+            <div class="chat-header-title">
+                <div class="assistant-avatar-badge">🤖</div>
+                <div class="assistant-meta-title">
+                    <h2 style="font-size: 0.95rem;">Ask MAUSAM MITRA</h2>
+                    <p style="font-size: 0.7rem;">Quick AI Q&A</p>
+                </div>
+            </div>
+            <button id="close-drawer-btn" style="background:none; border:none; color:var(--text-secondary); font-size:18px; cursor:pointer;">✕</button>
+        </div>
+
+        <div id="drawer-chat-messages" class="chat-messages-container" style="padding: 12px;"></div>
+
+        <div class="quick-questions-section" style="padding: 8px 12px;">
+            <div id="drawer-quick-chips" class="quick-chips-flex">
+                <button class="chip-btn" data-question="Kal baarish hogi?">🌧️ Kal baarish?</button>
+                <button class="chip-btn" data-question="Is travel safe?">🚗 Travel safe?</button>
+                <button class="chip-btn" data-question="Current weather summary">🌤️ Weather summary</button>
+            </div>
+        </div>
+
+        <div class="chat-input-area" style="padding: 10px 12px;">
+            <button id="drawer-voice-btn" class="btn-voice" style="width:36px; height:36px; font-size:16px;">🎤</button>
+            <input type="text" id="drawer-chat-input" class="chat-input-box" style="padding:8px 14px; font-size:0.85rem;" placeholder="Ask weather question..." />
+            <button id="drawer-send-btn" class="btn-send" style="width:36px; height:36px; font-size:16px;">➤</button>
+        </div>
+    </div>
+
+    <script src="js/assistant.js"></script>
+    <script src="js/app.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="MAUSAM MITRA Admin Dashboard - Authority Weather Situation Overview & Regional Analytics for SIH">
+    <title>MAUSAM MITRA | Admin & Authority Weather Situation Overview</title>
+
+    <!-- Google Fonts: Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Leaflet.js CSS (OpenStreetMap Interactive Map) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- =================================================================== -->
+    <!-- HEADER & NAVIGATION                                                 -->
+    <!-- =================================================================== -->
+    <header class="app-header">
+        <div class="header-container">
+            <div class="brand-wrapper">
+                <div class="brand-logo-icon">🏛️</div>
+                <div class="brand-title-group">
+                    <h1>MAUSAM MITRA</h1>
+                    <span class="brand-tagline">Admin & Authority Situation Overview</span>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="main-nav" aria-label="Main Navigation">
+                <a href="index.html" class="nav-link">🏠 Home</a>
+                <a href="dashboard.html" class="nav-link">🌡️ Dashboard</a>
+                <a href="forecast.html" class="nav-link">🌤️ Forecast</a>
+                <a href="assistant.html" class="nav-link">🤖 Assistant</a>
+                <a href="activity.html" class="nav-link">🎯 Activity</a>
+                <a href="alerts.html" class="nav-link">🚨 Alerts</a>
+                <a href="map.html" class="nav-link">🗺️ Risk Map</a>
+                <a href="preparedness.html" class="nav-link">🛡️ Preparedness</a>
+                <a href="impact.html" class="nav-link">🚗 Impact</a>
+                <a href="community.html" class="nav-link">👥 Community</a>
+                <a href="history.html" class="nav-link">📊 History</a>
+                <a href="profile.html" class="nav-link">👤 Profile</a>
+                <a href="admin.html" class="nav-link active">🏛️ Admin</a>
+            </nav>
+
+
+            <div id="backendStatusBadge" class="status-badge connected">
+                <span class="status-dot"></span>
+                <span id="backendStatusText">Admin Portal Active</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- =================================================================== -->
+    <!-- MAIN DASHBOARD CONTENT                                              -->
+    <!-- =================================================================== -->
+    <main class="main-container">
+
+        <!-- Demo Mode & Sync Banner (Part 14) -->
+        <div class="system-alert-banner" style="border-color: rgba(56, 189, 248, 0.3); background: rgba(56, 189, 248, 0.08);">
+            <div class="alert-content">
+                <span class="alert-icon">🏛️</span>
+                <div>
+                    <h3 class="alert-title">DEMO ADMIN DASHBOARD — Regional Weather Situation Overview</h3>
+                    <p class="alert-desc">SIH Demonstration Mode • Real-time aggregated weather analytics & risk scores across monitored regional cities.</p>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span id="adminLastSyncText" class="alert-desc" style="font-weight: 600;">Updating analytics...</span>
+                <button id="adminRefreshBtn" class="btn-retry">🔄 Refresh Data</button>
+            </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- HYPERLOCAL REGIONAL WEATHER INTELLIGENCE & LOCATION ADMIN (PARTS 19 & 20) -->
+        <!-- =================================================================== -->
+        <section id="adminRegionalSection" class="my-6">
+            <div id="adminRegionalContainer"></div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- PART 1: WEATHER SITUATION OVERVIEW METRIC CARDS                     -->
+        <!-- =================================================================== -->
+        <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+            <div class="glass-card metric-pill" style="align-items: center; text-align: center;">
+                <span class="metric-label">Monitored Locations</span>
+                <span class="hero-temp-large" id="adminTotalLocs" style="font-size: 2.2rem;">--</span>
+            </div>
+            <div class="glass-card metric-pill" style="align-items: center; text-align: center; border-color: rgba(16, 185, 129, 0.3);">
+                <span class="metric-label" style="color: #34d399;">🟢 Low Risk</span>
+                <span class="hero-temp-large" id="adminLowCount" style="font-size: 2.2rem; color: #34d399;">--</span>
+            </div>
+            <div class="glass-card metric-pill" style="align-items: center; text-align: center; border-color: rgba(245, 158, 11, 0.3);">
+                <span class="metric-label" style="color: #fbbf24;">🟡 Moderate Risk</span>
+                <span class="hero-temp-large" id="adminModerateCount" style="font-size: 2.2rem; color: #fbbf24;">--</span>
+            </div>
+            <div class="glass-card metric-pill" style="align-items: center; text-align: center; border-color: rgba(249, 115, 22, 0.3);">
+                <span class="metric-label" style="color: #fb923c;">🟠 High Risk</span>
+                <span class="hero-temp-large" id="adminHighCount" style="font-size: 2.2rem; color: #fb923c;">--</span>
+            </div>
+            <div class="glass-card metric-pill" style="align-items: center; text-align: center; border-color: rgba(239, 68, 68, 0.3);">
+                <span class="metric-label" style="color: #f87171;">🔴 Severe Risk</span>
+                <span class="hero-temp-large" id="adminSevereCount" style="font-size: 2.2rem; color: #f87171;">--</span>
+            </div>
+            <div class="glass-card metric-pill" style="align-items: center; text-align: center;">
+                <span class="metric-label">🚨 Active Alerts</span>
+                <span class="hero-temp-large" id="adminActiveAlertsCount" style="font-size: 2.2rem;">--</span>
+            </div>
+            <div class="glass-card metric-pill" style="align-items: center; text-align: center;">
+                <span class="metric-label">Official Source Status</span>
+                <div id="adminOfficialStatusBadgeContainer" style="margin-top: 6px;">
+                    <span id="adminOfficialStatusBadge" class="status-badge-lg">🟢 Connected</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- PART 15: REGIONAL EARLY WARNING LEVEL OVERVIEW                      -->
+        <!-- =================================================================== -->
+        <section class="glass-card" style="margin-top: 24px;">
+            <div class="card-header-flex">
+                <div>
+                    <h3 class="activity-card-title">🚨 Early Warning Regional Overview</h3>
+                    <p class="activity-card-subtitle">System warning classification across monitored regional locations</p>
+                </div>
+                <span class="badge-tag" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">Real-Time Classification</span>
+            </div>
+
+            <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-top: 16px;">
+                <div class="glass-card metric-pill" style="align-items: center; text-align: center; border-color: rgba(16, 185, 129, 0.3);">
+                    <span class="metric-label" style="color: #34d399;">🟢 Normal Locations</span>
+                    <span class="hero-temp-large" id="adminEwNormalCount" style="font-size: 2rem; color: #34d399;">--</span>
+                </div>
+                <div class="glass-card metric-pill" style="align-items: center; text-align: center; border-color: rgba(245, 158, 11, 0.3);">
+                    <span class="metric-label" style="color: #fbbf24;">🟡 Watch Locations</span>
+                    <span class="hero-temp-large" id="adminEwWatchCount" style="font-size: 2rem; color: #fbbf24;">--</span>
+                </div>
+                <div class="glass-card metric-pill" style="align-items: center; text-align: center; border-color: rgba(249, 115, 22, 0.3);">
+                    <span class="metric-label" style="color: #fb923c;">🟠 Warning Locations</span>
+                    <span class="hero-temp-large" id="adminEwWarningCount" style="font-size: 2rem; color: #fb923c;">--</span>
+                </div>
+                <div class="glass-card metric-pill" style="align-items: center; text-align: center; border-color: rgba(239, 68, 68, 0.3);">
+                    <span class="metric-label" style="color: #f87171;">🔴 Severe Locations</span>
+                    <span class="hero-temp-large" id="adminEwSevereCount" style="font-size: 2rem; color: #f87171;">--</span>
+                </div>
+                <div class="glass-card metric-pill" style="align-items: center; text-align: center; border-color: rgba(239, 68, 68, 0.5);">
+                    <span class="metric-label" style="color: #f87171;">🚨 Official Warnings</span>
+                    <span class="hero-temp-large" id="adminEwOfficialCount" style="font-size: 2rem; color: #f87171;">--</span>
+        <!-- =================================================================== -->
+        <!-- PART 21 & 22: REGIONAL IMPACT OVERVIEW & LOCATION COMPARISON        -->
+        <!-- =================================================================== -->
+        <section class="glass-card" style="margin-top: 24px;">
+            <div class="card-header-flex">
+                <div>
+                    <h3 class="activity-card-title">🎯 Regional Impact Overview & Comparison</h3>
+                    <p class="activity-card-subtitle">Activity & domain impact breakdown across monitored regional locations</p>
+                </div>
+                <span class="badge-tag" style="background: rgba(167, 139, 250, 0.15); color: #a78bfa;">Impact Sensitivity Matrix</span>
+            </div>
+
+            <!-- Part 21 Overview Metric Pills -->
+            <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-top: 16px;">
+                <div class="glass-card metric-pill" style="align-items: center; text-align: center; border-color: rgba(249, 115, 22, 0.3);">
+                    <span class="metric-label" style="color: #fb923c;">🚗 High Travel Impact</span>
+                    <span class="hero-temp-large" id="adminImpactTravelCount" style="font-size: 2rem; color: #fb923c;">--</span>
+                </div>
+                <div class="glass-card metric-pill" style="align-items: center; text-align: center; border-color: rgba(56, 189, 248, 0.3);">
+                    <span class="metric-label" style="color: #38bdf8;">🏃 High Outdoor Impact</span>
+                    <span class="hero-temp-large" id="adminImpactFitnessCount" style="font-size: 2rem; color: #38bdf8;">--</span>
+                </div>
+                <div class="glass-card metric-pill" style="align-items: center; text-align: center; border-color: rgba(251, 191, 36, 0.3);">
+                    <span class="metric-label" style="color: #fbbf24;">🌾 High Farming Impact</span>
+                    <span class="hero-temp-large" id="adminImpactFarmingCount" style="font-size: 2rem; color: #fbbf24;">--</span>
+                </div>
+                <div class="glass-card metric-pill" style="align-items: center; text-align: center; border-color: rgba(239, 68, 68, 0.3);">
+                    <span class="metric-label" style="color: #f87171;">🔴 Severe Overall Impact</span>
+                    <span class="hero-temp-large" id="adminImpactSevereCount" style="font-size: 2rem; color: #f87171;">--</span>
+                </div>
+            </div>
+
+            <!-- Part 22 Regional Location Impact Comparison Table -->
+            <div class="table-responsive-wrapper" style="margin-top: 20px;">
+                <table class="admin-location-table">
+                    <thead>
+                        <tr>
+                            <th>Location</th>
+                            <th>Weather Risk</th>
+                            <th>Travel Impact</th>
+                            <th>Outdoor Impact</th>
+                            <th>Farming Impact</th>
+                            <th>Overall Impact</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminImpactComparisonTableBody">
+                        <tr><td colspan="6" class="text-muted" style="text-align: center;">Evaluating regional location impacts...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- PART 10: OFFICIAL GOVERNMENT WEATHER WARNINGS TABLE                 -->
+        <!-- =================================================================== -->
+        <section class="glass-card" style="margin-top: 24px;">
+            <div class="card-header-flex" style="margin-bottom: 12px;">
+                <div>
+                    <h3 class="activity-card-title">🏛️ Official Government Weather Warnings</h3>
+                    <p class="activity-card-subtitle">Active bulletins issued by official weather authorities (IMD / Emergency Feeds)</p>
+                </div>
+                <span id="officialProviderNameTag" class="badge-tag">India Meteorological Department (IMD)</span>
+            </div>
+
+            <div class="table-responsive-wrapper">
+                <table class="admin-location-table">
+                    <thead>
+                        <tr>
+                            <th>Location</th>
+                            <th>Warning Type</th>
+                            <th>Severity</th>
+                            <th>Validity Period</th>
+                            <th>Source Authority</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminOfficialWarningsBody">
+                        <tr><td colspan="6" class="text-muted" style="text-align: center;">Checking official weather warnings...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- PART 10: HIGHEST RISK LOCATION HIGHLIGHT CARD                       -->
+        <!-- =================================================================== -->
+        <section class="glass-card" id="highestRiskCard" style="position: relative;">
+            <div id="adminLoadingState" class="card-overlay-state" style="display: flex;">
+                <div class="spinner"></div>
+                <div class="overlay-title">Loading Admin Analytics...</div>
+            </div>
+            <div id="adminErrorState" class="card-overlay-state" style="display: none;">
+                <span style="font-size: 1.5rem;">⚠️</span>
+                <div class="overlay-title">Unable to load admin analytics.</div>
+                <div class="overlay-desc">Please verify backend server connection.</div>
+            </div>
+
+            <div class="card-header-flex">
+                <div>
+                    <h3 class="activity-card-title">⚠️ HIGHEST RISK LOCATION</h3>
+                    <p class="activity-card-subtitle">Highest calculated weather threat level across monitored cities</p>
+                </div>
+                <span id="highestRiskBadge" class="badge-tag level-severe">🔴 HIGHEST THREAT</span>
+            </div>
+
+            <div id="highestRiskBody" class="highest-risk-banner-body"></div>
+        <!-- =================================================================== -->
+        <!-- STEP 3: ADMIN ROAD HAZARD & BLOCKED ROAD MANAGEMENT                 -->
+        <!-- =================================================================== -->
+        <section class="glass-card my-4 p-4">
+            <div class="card-header-flex mb-3">
+                <div>
+                    <h3 class="activity-card-title flex items-center gap-2">
+                        <span>🛣️</span> Blocked Road & Road Hazard Management
+                    </h3>
+                    <p class="activity-card-subtitle">Report official blocked roads, road repairs, or waterlogged routes to affect map and Smart Journey risk calculations.</p>
+                </div>
+            </div>
+
+            <form id="adminAddHazardForm" onsubmit="return false;" class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4 p-3 bg-slate-900/60 rounded-xl border border-slate-800">
+                <div>
+                    <label for="adminHazardRoadName" class="block text-xs font-semibold text-slate-300 mb-1">Road Name / Location Area</label>
+                    <input type="text" id="adminHazardRoadName" class="journey-input w-full" placeholder="e.g. NH-30 Rewa Bypass" required>
+                </div>
+                <div>
+                    <label for="adminHazardLat" class="block text-xs font-semibold text-slate-300 mb-1">Latitude</label>
+                    <input type="number" step="any" id="adminHazardLat" class="journey-input w-full" placeholder="e.g. 24.5373" required>
+                </div>
+                <div>
+                    <label for="adminHazardLon" class="block text-xs font-semibold text-slate-300 mb-1">Longitude</label>
+                    <input type="number" step="any" id="adminHazardLon" class="journey-input w-full" placeholder="e.g. 81.3008" required>
+                </div>
+                <div>
+                    <label for="adminHazardType" class="block text-xs font-semibold text-slate-300 mb-1">Hazard Type</label>
+                    <select id="adminHazardType" class="journey-input w-full bg-slate-800 text-slate-200">
+                        <option value="BLOCKED">BLOCKED ROAD</option>
+                        <option value="FLOODED">FLOODED</option>
+                        <option value="WATERLOGGED">WATERLOGGED</option>
+                        <option value="DAMAGED">DAMAGED ROAD</option>
+                        <option value="ACCIDENT">ACCIDENT</option>
+                        <option value="TRAFFIC">HEAVY TRAFFIC</option>
+                        <option value="OTHER">OTHER HAZARD</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="adminHazardSeverity" class="block text-xs font-semibold text-slate-300 mb-1">Severity</label>
+                    <select id="adminHazardSeverity" class="journey-input w-full bg-slate-800 text-slate-200">
+                        <option value="HIGH">HIGH (Standard Delay)</option>
+                        <option value="SEVERE">SEVERE (Complete Blockage)</option>
+                        <option value="MODERATE">MODERATE (Slow Traffic)</option>
+                        <option value="LOW">LOW (Minor Hazard)</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="adminHazardDesc" class="block text-xs font-semibold text-slate-300 mb-1">Description</label>
+                    <input type="text" id="adminHazardDesc" class="journey-input w-full" placeholder="e.g. Bridge repair under progress">
+                </div>
+                <div class="md:col-span-3 flex justify-end">
+                    <button type="button" id="adminSubmitHazardBtn" onclick="submitAdminRoadHazard()" class="btn-analyze-journey text-xs py-2 px-4">
+                        ➕ Add Official Blocked Road / Hazard
+                    </button>
+                </div>
+            </form>
+
+            <div id="adminHazardStatusMsg" class="text-xs mb-2 text-emerald-400 font-semibold" style="display: none;"></div>
+
+            <div class="table-responsive-wrapper">
+                <table class="admin-location-table">
+                    <thead>
+                        <tr>
+                            <th>Road Name</th>
+                            <th>Coordinates</th>
+                            <th>Hazard Type</th>
+                            <th>Severity</th>
+                            <th>Source</th>
+                            <th>Freshness</th>
+                            <th>Description</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminRoadHazardsTableBody">
+                        <tr><td colspan="8" class="text-muted" style="text-align: center;">Loading active road hazards...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- PARTS 3 & 11: WEATHER ANALYTICS & CHARTS GRID                       -->
+        <!-- =================================================================== -->
+        <section class="forecast-split-grid">
+            <!-- Chart 1: Risk Distribution Progress Chart -->
+            <div class="glass-card">
+                <h3 class="activity-card-title">📊 Risk Level Distribution</h3>
+                <p class="activity-card-subtitle">Breakdown of monitored regional cities by risk level</p>
+
+                <div id="riskDistributionChart" class="risk-dist-chart-wrapper"></div>
+            </div>
+
+            <!-- Chart 2: Regional Temperature Trajectory Chart -->
+            <div class="glass-card temp-trend-card">
+                <h3 class="activity-card-title">🌡️ Regional Temperature Comparison</h3>
+                <p class="activity-card-subtitle">Temperature comparison across monitored regional cities</p>
+
+                <div class="canvas-wrapper">
+                    <canvas id="adminTempChartCanvas"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- PART 2: ADMIN MONITORED LOCATION SITUATION TABLE                    -->
+        <!-- =================================================================== -->
+        <section class="glass-card">
+            <div class="card-header-flex" style="margin-bottom: 12px;">
+                <div>
+                    <h3 class="activity-card-title">📋 Monitored Regional Cities Situation Table</h3>
+                    <p class="activity-card-subtitle">Real-time weather metrics, risk index scores, and active alert counts</p>
+                </div>
+                <div class="search-input-group" style="min-width: 200px; max-width: 280px; padding: 2px 10px;">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="adminTableFilterInput" class="search-input" placeholder="Filter city or state..." aria-label="Filter locations">
+                </div>
+            </div>
+
+            <div class="table-responsive-wrapper">
+                <table class="admin-location-table">
+                    <thead>
+                        <tr>
+                            <th>Location</th>
+                            <th>State</th>
+                            <th>Temperature</th>
+                            <th>Condition</th>
+                            <th>Risk Score</th>
+                            <th>Risk Level</th>
+                            <th>Active Alerts</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminTableBody">
+                        <tr><td colspan="7" class="text-muted" style="text-align: center;">Loading monitored locations...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- PARTS 10, 11 & 14: HISTORICAL WEATHER TRENDS & LOCATION COMPARISON  -->
+        <!-- =================================================================== -->
+        <section class="glass-card" style="margin-top: 24px;">
+            <div class="card-header-flex" style="margin-bottom: 14px;">
+                <div>
+                    <h3 class="activity-card-title">📈 Historical Weather Trends & Location Comparison</h3>
+                    <p class="activity-card-subtitle">Comparative historical averages, risk observations, and observation timeframe controls</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <label style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 600;">Timeframe:</label>
+                    <select id="adminHistoryTimeframeSelect" class="form-select" style="padding: 4px 10px; font-size: 0.82rem;">
+                        <option value="1">Last 24 Hours</option>
+                        <option value="7" selected>Last 7 Days</option>
+                        <option value="30">Last 30 Days</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Location Comparison Table (Part 14) -->
+            <div class="table-responsive-wrapper">
+                <table class="admin-location-table">
+                    <thead>
+                        <tr>
+                            <th>Location</th>
+                            <th>Avg Temp</th>
+                            <th>Avg Humidity</th>
+                            <th>Avg Wind</th>
+                            <th>Avg Risk Score</th>
+                            <th>High-Risk Observations</th>
+                            <th>Data Quality</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminComparisonTableBody">
+                        <tr><td colspan="7" class="text-muted" style="text-align: center;">Analyzing historical trend snapshots...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- PART 21: ML MODEL STATUS & PIPELINE MONITORING                     -->
+        <!-- =================================================================== -->
+        <section class="glass-card" style="margin-top: 24px;">
+            <div class="card-header-flex">
+                <div>
+                    <h3 class="activity-card-title">🤖 ML Model Pipeline Status</h3>
+                    <p class="activity-card-subtitle">Machine learning foundational pipeline monitoring & validation metrics</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span id="adminMlStatusBadge" class="status-badge-lg">Checking...</span>
+                    <button id="adminRetrainBtn" class="btn-map-control" style="background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.3);">
+                        🔄 Refresh ML Status
+                    </button>
+                </div>
+            </div>
+
+            <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-top: 16px;">
+                <div class="glass-card metric-pill" style="align-items: center; text-align: center;">
+                    <span class="metric-label">Target Model</span>
+                    <span id="adminMlModelName" class="metric-val" style="font-weight: 700; color: #38bdf8;">Temperature Prediction</span>
+                </div>
+                <div class="glass-card metric-pill" style="align-items: center; text-align: center;">
+                    <span class="metric-label">Model Version</span>
+                    <span id="adminMlVersion" class="metric-val" style="font-weight: 700;">v1.0</span>
+                </div>
+                <div class="glass-card metric-pill" style="align-items: center; text-align: center;">
+                    <span class="metric-label">Algorithm</span>
+                    <span id="adminMlAlgorithm" class="metric-val" style="font-weight: 600;">Ridge Regression</span>
+                </div>
+                <div class="glass-card metric-pill" style="align-items: center; text-align: center;">
+                    <span class="metric-label">Training Records</span>
+                    <span id="adminMlRecords" class="metric-val" style="font-weight: 700; color: #a7f3d0;">--</span>
+                </div>
+                <div class="glass-card metric-pill" style="align-items: center; text-align: center;">
+                    <span class="metric-label">MAE (Mean Abs Error)</span>
+                    <span id="adminMlMae" class="metric-val" style="font-weight: 700; color: #fbbf24;">--</span>
+                </div>
+                <div class="glass-card metric-pill" style="align-items: center; text-align: center;">
+                    <span class="metric-label">RMSE</span>
+                    <span id="adminMlRmse" class="metric-val" style="font-weight: 700; color: #f87171;">--</span>
+                </div>
+                <div class="glass-card metric-pill" style="align-items: center; text-align: center;">
+                    <span class="metric-label">R² Score</span>
+                    <span id="adminMlR2" class="metric-val" style="font-weight: 700; color: #60a5fa;">--</span>
+                </div>
+            </div>
+
+            <div id="adminMlNoteText" class="text-muted" style="margin-top: 12px; font-size: 0.85rem; padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+                Checking dataset sufficiency for machine learning training...
+            </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- PART 8: ADMIN REGIONAL WEATHER RISK MAP                             -->
+        <!-- =================================================================== -->
+        <section class="glass-card map-section-card">
+            <div class="map-header-flex">
+                <div>
+                    <h3 class="activity-card-title">🗺️ REGIONAL WEATHER RISK MAP</h3>
+                    <p class="activity-card-subtitle">Geographic risk distribution across monitored regional locations</p>
+                </div>
+            </div>
+
+            <div class="map-wrapper" style="position: relative;">
+                <div id="adminMapContainer" class="weather-risk-map-container"></div>
+            </div>
+
+            <div class="map-legend-bar">
+                <span class="legend-title">Weather Risk:</span>
+                <div class="legend-items">
+                    <span class="legend-item"><span class="legend-color level-low"></span> 🟢 LOW</span>
+                    <span class="legend-item"><span class="legend-color level-moderate"></span> 🟡 MODERATE</span>
+                    <span class="legend-item"><span class="legend-color level-high"></span> 🟠 HIGH</span>
+                    <span class="legend-item"><span class="legend-color level-severe"></span> 🔴 SEVERE</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- PART 9: ACTIVE REGIONAL WEATHER ALERTS LIST                         -->
+        <!-- =================================================================== -->
+        <section class="glass-card">
+            <div class="card-header-flex">
+                <div>
+                    <h3 class="activity-card-title">🚨 Active Regional Weather Alerts</h3>
+                    <p class="activity-card-subtitle">Aggregated severe weather alerts across all monitored locations</p>
+                </div>
+            </div>
+
+            <div id="adminAlertsContainer" class="alerts-list-container"></div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- COMMUNITY REPORTS MODERATION & AUDIT LOGS (Part 23, 24 & 25)       -->
+        <!-- =================================================================== -->
+        <section class="glass-card mb-6">
+            <div class="card-header-flex mb-3">
+                <div>
+                    <h3 class="activity-card-title">👥 Community Weather Reports Moderation</h3>
+                    <p class="activity-card-subtitle">Review crowd-sourced weather observations, corroborate against meteorology metrics, and record moderation actions.</p>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-sm btn-outline-light active" onclick="fetchAdminCommunityReports('all')">All</button>
+                    <button class="btn btn-sm btn-outline-warning" onclick="fetchAdminCommunityReports('active')">Pending/Active</button>
+                    <button class="btn btn-sm btn-outline-success" onclick="fetchAdminCommunityReports('verified')">Verified</button>
+                </div>
+            </div>
+
+            <div class="table-responsive mb-4">
+                <table class="table table-dark table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Observation</th>
+                            <th>Severity</th>
+                            <th>Approx Area</th>
+                            <th>Time</th>
+                            <th>Corroboration</th>
+                            <th>Details/Reason</th>
+                            <th>Moderation Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminCommunityReportsTableBody">
+                        <tr><td colspan="7" class="text-muted p-3">Loading community weather reports...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h4 class="text-sm font-semibold text-slate-300 mb-2">📜 Admin Moderation Audit Logs</h4>
+            <div class="table-responsive">
+                <table class="table table-sm table-dark table-striped align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Report ID</th>
+                            <th>Action</th>
+                            <th>Rationale</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminModerationLogsTableBody">
+                        <tr><td colspan="4" class="text-muted p-2">Loading audit logs...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- PART 31: AI WEATHER ASSISTANT USAGE ANALYTICS                       -->
+        <!-- =================================================================== -->
+        <section class="glass-card mb-6" style="margin-top: 24px;">
+            <div class="card-header-flex">
+                <div>
+                    <h3 class="activity-card-title">🤖 AI Weather Assistant Usage Analytics</h3>
+                    <p class="activity-card-subtitle">Anonymized user query metrics, top intent classification, and query distributions</p>
+                </div>
+                <span class="badge-tag" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">NLP Analytics</span>
+            </div>
+
+            <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-top: 16px;">
+                <div class="glass-card metric-pill" style="align-items: center; text-align: center;">
+                    <span class="metric-label">Total Questions Asked</span>
+                    <span id="adminAssistantTotalQueries" class="hero-temp-large" style="font-size: 2.2rem; color: #38bdf8;">--</span>
+                </div>
+                <div class="glass-card metric-pill" style="align-items: center; text-align: center; border-color: rgba(167, 139, 250, 0.3);">
+                    <span class="metric-label" style="color: #a78bfa;">Top Question Category</span>
+                    <span id="adminAssistantTopIntent" class="hero-temp-large" style="font-size: 1.4rem; color: #a78bfa; margin-top: 6px;">--</span>
+                </div>
+            </div>
+
+            <div id="adminAssistantIntentsContainer" style="margin-top: 16px; display: flex; flex-wrap: wrap; gap: 8px;"></div>
+        </section>
+
+        <!-- Location Details Modal (Part 8) -->
+        <div id="locationDetailsModal" class="modal-overlay" style="display: none;">
+            <div class="modal-card glass-card">
+                <div class="modal-header">
+                    <h3>📍 Location Risk Breakdown</h3>
+                    <button id="closeModalBtn" class="btn-close-modal">&times;</button>
+                </div>
+                <div id="modalDetailsBody" class="modal-body"></div>
+            </div>
+        </div>
+
+
+    </main>
+
+    <!-- =================================================================== -->
+    <!-- FOOTER                                                              -->
+    <!-- =================================================================== -->
+    <footer class="app-footer">
+        <div class="footer-container">
+            <div>
+                <strong>MAUSAM MITRA (मौसम मित्र)</strong> — Authority Admin Portal & Regional Analytics
+            </div>
+            <div class="footer-tech-stack">
+                Tech Stack:
+                <span>HTML5</span>
+                <span>CSS3</span>
+                <span>Vanilla JS</span>
+                <span>Python</span>
+                <span>Flask</span>
+                <span>Analytics Engine</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript Modules -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="js/api.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/preferences.js"></script>
+    <script src="js/hyperlocal.js"></script>
+    <script src="js/admin.js"></script>
+
+</body>
+</html>
